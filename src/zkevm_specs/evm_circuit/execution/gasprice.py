@@ -12,7 +12,7 @@ def gasprice(instruction: Instruction):
     # fetch gasPrice from rw table
     # fetch from the Tx context table the gasPrice
     instruction.constrain_equal_word(
-        instruction.tx_context_lookup_word(tx_id, TxContextFieldTag.GasPrice),
+        instruction.tx_context_lookup_word(tx_id, TxContextFieldTag.GasFeeCap),
         instruction.stack_push(),
     )
 

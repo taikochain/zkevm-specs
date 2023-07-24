@@ -23,7 +23,17 @@ def sign_tx(sk: keys.PrivateKey, tx: Transaction, chain_id: U64) -> Transaction:
     sig_r = sig.r
     sig_s = sig.s
     return Transaction(
-        tx.nonce, tx.gas_fee_cap, tx.gas, tx.to, tx.value, tx.data, sig_v, sig_r, sig_s
+        tx.nonce,
+        tx.gas_tip_cap,
+        tx.gas_fee_cap,
+        tx.gas,
+        tx.to,
+        tx.value,
+        tx.data,
+        tx.access_list,
+        sig_v,
+        sig_r,
+        sig_s,
     )
 
 
@@ -85,13 +95,15 @@ def test_tx2witness():
     chain_id = 23
 
     nonce = 543
+    gas_tip_cap = 500
     gas_fee_cap = 1234
     gas = 987654
+    access_list = list()
     to = 0x12345678
     value = 0x1029384756
     data = bytes([0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99])
 
-    tx = Transaction(nonce, gas_fee_cap, gas, to, value, data, 0, 0, 0)
+    tx = Transaction(nonce, gas_tip_cap, gas_fee_cap, gas, to, value, data, access_list, 0, 0, 0)
     tx = sign_tx(sk, tx, chain_id)
     keccak_table = KeccakTable()
     rows, sign_verification = tx2witness(0, tx, chain_id, r, keccak_table)
@@ -102,18 +114,22 @@ def test_tx2witness():
 
 def gen_tx(i: int, sk: keys.PrivateKey, to: int, chain_id) -> Transaction:
     nonce = 300 + i
+    gas_tip_cap = 500 + i * 2
     gas_fee_cap = 1000 + i * 2
     gas = 20000 + i * 3
     value = 0x30000 + i * 4
     data = bytes([i] * i)
+    access_list = list()
 
     tx = Transaction(
         U64(nonce),
+        U256(gas_tip_cap),
         U256(gas_fee_cap),
         U64(gas),
         U160(to),
         U256(value),
         data,
+        access_list,
         U64(0),
         U256(0),
         U256(0),
