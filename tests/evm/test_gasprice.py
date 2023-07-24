@@ -23,7 +23,7 @@ TESTING_DATA = (
 
 @pytest.mark.parametrize("gasprice", TESTING_DATA)
 def test_gasprice(gasprice: U256):
-    tx = Transaction(gas_price=gasprice)
+    tx = Transaction(gas_fee_cap=gasprice)
 
     bytecode = Bytecode().gasprice().stop()
     bytecode_hash = Word(bytecode.hash())

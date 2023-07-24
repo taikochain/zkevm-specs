@@ -21,7 +21,11 @@ TESTING_DATA = (
     # Tx with non-capped refund
     (
         Transaction(
-            id=1, caller_address=0xFE, callee_address=CALLEE_ADDRESS, gas=27000, gas_price=int(2e9)
+            id=1,
+            caller_address=0xFE,
+            callee_address=CALLEE_ADDRESS,
+            gas=27000,
+            gas_fee_cap=int(2e9),
         ),
         994,
         4800,
@@ -32,7 +36,11 @@ TESTING_DATA = (
     # Tx with capped refund
     (
         Transaction(
-            id=2, caller_address=0xFE, callee_address=CALLEE_ADDRESS, gas=65000, gas_price=int(2e9)
+            id=2,
+            caller_address=0xFE,
+            callee_address=CALLEE_ADDRESS,
+            gas=65000,
+            gas_fee_cap=int(2e9),
         ),
         3952,
         38400,
@@ -43,7 +51,11 @@ TESTING_DATA = (
     # Last tx
     (
         Transaction(
-            id=3, caller_address=0xFE, callee_address=CALLEE_ADDRESS, gas=21000, gas_price=int(2e9)
+            id=3,
+            caller_address=0xFE,
+            callee_address=CALLEE_ADDRESS,
+            gas=21000,
+            gas_fee_cap=int(2e9),
         ),
         0,  # gas_left
         0,  # refund
@@ -58,7 +70,7 @@ TESTING_DATA = (
             caller_address=0xFE,
             callee_address=CALLEE_ADDRESS,
             gas=60000,
-            gas_price=int(2e9),
+            gas_fee_cap=int(2e9),
             invalid_tx=1,
         ),
         60000,
@@ -74,7 +86,7 @@ TESTING_DATA = (
             caller_address=0xFE,
             callee_address=CALLEE_ADDRESS,
             gas=65000,
-            gas_price=int(2e9),
+            gas_fee_cap=int(2e9),
             invalid_tx=1,
         ),
         65000,
@@ -99,10 +111,12 @@ def test_end_tx(
 ):
     block = Block()
     effective_refund = min(refund, (tx.gas - gas_left) // MAX_REFUND_QUOTIENT_OF_GAS_USED)
-    caller_balance_prev = int(1e18) - (tx.value + tx.gas * tx.gas_price)
-    caller_balance = caller_balance_prev + (gas_left + effective_refund) * tx.gas_price
+    caller_balance_prev = int(1e18) - (tx.value + tx.gas * tx.gas_fee_cap)
+    caller_balance = caller_balance_prev + (gas_left + effective_refund) * tx.gas_fee_cap
     coinbase_balance_prev = 0
-    coinbase_balance = coinbase_balance_prev + (tx.gas - gas_left) * (tx.gas_price - block.base_fee)
+    coinbase_balance = coinbase_balance_prev + (tx.gas - gas_left) * (
+        tx.gas_fee_cap - block.base_fee
+    )
 
     rw_dictionary = (
         # fmt: off
