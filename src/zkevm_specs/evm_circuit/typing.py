@@ -88,7 +88,7 @@ class Block:
     def __init__(
         self,
         coinbase: U160 = U160(0x10),
-        treasury: U160 = U160(0x10),
+        treasury: U160 = U160(0x20),
         gas_limit: U64 = U64(int(15e6)),
         number: U64 = U64(0),
         timestamp: U64 = U64(0),
@@ -154,7 +154,7 @@ class Transaction:
         id: int = 1,
         nonce: U64 = U64(0),
         gas: U64 = U64(21000),
-        gas_tip_cap: U256 = U256(int(2e8)),
+        gas_tip_cap: U256 = U256(int(0)),
         gas_fee_cap: U256 = U256(int(2e9)),
         caller_address: U160 = U160(0xCAFE),
         callee_address: Optional[U160] = None,

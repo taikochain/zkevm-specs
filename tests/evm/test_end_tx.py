@@ -95,6 +95,54 @@ TESTING_DATA = (
         21000,
         True,  # success
     ),
+    # Eip 1559 tx, tip_cap < fee_cap - base_fee
+    (
+        Transaction(
+            id=2,
+            caller_address=0xFE,
+            callee_address=CALLEE_ADDRESS,
+            gas=65000,
+            gas_fee_cap=int(3e9),
+            gas_tip_cap=int(1e9),
+        ),
+        65000,
+        0,
+        False,
+        21000,
+        True,  # success
+    ),
+    # Eip 1559 tx, tip_cap = fee_cap - base_fee
+    (
+        Transaction(
+            id=2,
+            caller_address=0xFE,
+            callee_address=CALLEE_ADDRESS,
+            gas=65000,
+            gas_fee_cap=int(3e9),
+            gas_tip_cap=int(2e9),
+        ),
+        65000,
+        0,
+        False,
+        21000,
+        True,  # success
+    ),
+    # Eip 1559 tx, tip_cap > fee_cap - base_fee
+    (
+        Transaction(
+            id=2,
+            caller_address=0xFE,
+            callee_address=CALLEE_ADDRESS,
+            gas=65000,
+            gas_fee_cap=int(3e9),
+            gas_tip_cap=int(3e9),
+        ),
+        65000,
+        0,
+        False,
+        21000,
+        True,  # success
+    ),
 )
 
 

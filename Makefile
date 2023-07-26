@@ -19,5 +19,7 @@ type: ## Check the typing of the Python code
 test: ## Run tests
 	pytest --doctest-modules
 
+test-eip1559:
+	pytest tests/evm/test_end_tx.py
 
 .PHONY: help install fmt lint test
