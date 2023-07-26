@@ -33,7 +33,10 @@ def end_tx(instruction: Instruction):
 
     # Add gas_used * effective_tip to coinbase's balance
     base_fee = instruction.block_context_lookup_word(BlockContextFieldTag.BaseFee)
-    effective_tip, _ = instruction.sub_word(tx_gas_fee_cap, base_fee)
+    max_tip, _ = instruction.sub_word(tx_gas_fee_cap, base_fee)
+    tx_gas_tip_cap = instruction.tx_gas_tip_cap(tx_id)
+    # min(gas_tip_cap, gas_fee_cap - base_fee)
+    effective_tip = instruction.min_word(tx_gas_tip_cap, max_tip)
     reward, carry = instruction.mul_word_by_u64(effective_tip, gas_used)
     instruction.constrain_zero(carry)
     coinbase = instruction.block_context_lookup(BlockContextFieldTag.Coinbase)

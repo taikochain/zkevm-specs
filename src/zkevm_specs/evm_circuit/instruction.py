@@ -452,6 +452,10 @@ class Instruction:
         except ValueError:
             return FQ(0)
 
+    def min_word(self, lhs: Word, rhs: Word) -> Word:
+        lt, _ = self.compare_word(lhs, rhs)
+        return self.select_word(lt, lhs, rhs)
+
     def min(self, lhs: Expression, rhs: Expression, n_bytes: int) -> FQ:
         lt, _ = self.compare(lhs, rhs, n_bytes)
         return cast_expr(self.select(lt, lhs, rhs), FQ)
