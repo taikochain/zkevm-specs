@@ -114,10 +114,10 @@ def test_end_tx(
     caller_balance_prev = int(1e18) - (tx.value + tx.gas * tx.gas_fee_cap)
     caller_balance = caller_balance_prev + (gas_left + effective_refund) * tx.gas_fee_cap
     coinbase_balance_prev = 0
-    coinbase_balance = coinbase_balance_prev + (tx.gas - gas_left) * (
-        tx.gas_fee_cap - block.base_fee
-    )
-
+    effective_tip = min(tx.gas_tip_cap, tx.gas_fee_cap - block.base_fee)
+    coinbase_balance = coinbase_balance_prev + (tx.gas - gas_left) * effective_tip
+    treasury_balance_prev = 0
+    treasury_balance = treasury_balance_prev + (tx.gas - gas_left) * block.base_fee
     rw_dictionary = (
         # fmt: off
         RWDictionary(17)
@@ -126,6 +126,7 @@ def test_end_tx(
             .tx_refund_read(tx.id, refund)
             .account_write(tx.caller_address, AccountFieldTag.Balance, Word(caller_balance), Word(caller_balance_prev))
             .account_write(block.coinbase, AccountFieldTag.Balance, Word(coinbase_balance), Word(coinbase_balance_prev))
+            .account_write(block.treasury, AccountFieldTag.Balance, Word(treasury_balance), Word(treasury_balance_prev))
             .tx_receipt_write(tx.id, TxReceiptFieldTag.PostStateOrStatus, 1 - tx.invalid_tx)
             .tx_receipt_write(tx.id, TxReceiptFieldTag.LogLength, 0)
         # fmt: on
