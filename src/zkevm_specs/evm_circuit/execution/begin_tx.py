@@ -44,7 +44,7 @@ def begin_tx(instruction: Instruction):
 
     # TODO: Implement EIP 1559 (currently it supports legacy transaction format)
     # Calculate gas fee
-    # sub gas fee from sender balance: gas * gas_fee_cap
+    # Subtract the gas fee from the sender balance: gas * gas_fee_cap
     tx_gas = instruction.tx_context_lookup(tx_id, TxContextFieldTag.Gas)
     tx_gas_fee_cap = instruction.tx_gas_fee_cap(tx_id)
     gas_fee, carry = instruction.mul_word_by_u64(tx_gas_fee_cap, tx_gas)
