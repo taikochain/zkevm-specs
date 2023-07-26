@@ -23,9 +23,9 @@ def end_tx(instruction: Instruction):
         instruction.constrain_zero(effective_refund)
 
     # Add effective_refund * gas_price back to caller's balance
-    tx_gas_price = instruction.tx_gas_price(tx_id)
+    tx_gas_fee_cap = instruction.tx_gas_fee_cap(tx_id)
     value, carry = instruction.mul_word_by_u64(
-        tx_gas_price, instruction.curr.gas_left + effective_refund
+        tx_gas_fee_cap, instruction.curr.gas_left + effective_refund
     )
     instruction.constrain_zero(carry)
     tx_caller_address = instruction.tx_context_lookup(tx_id, TxContextFieldTag.CallerAddress)
@@ -33,12 +33,19 @@ def end_tx(instruction: Instruction):
 
     # Add gas_used * effective_tip to coinbase's balance
     base_fee = instruction.block_context_lookup_word(BlockContextFieldTag.BaseFee)
-    effective_tip, _ = instruction.sub_word(tx_gas_price, base_fee)
+    max_tip, _ = instruction.sub_word(tx_gas_fee_cap, base_fee)
+    tx_gas_tip_cap = instruction.tx_gas_tip_cap(tx_id)
+    # min(gas_tip_cap, gas_fee_cap - base_fee)
+    effective_tip = instruction.min_word(tx_gas_tip_cap, max_tip)
     reward, carry = instruction.mul_word_by_u64(effective_tip, gas_used)
     instruction.constrain_zero(carry)
     coinbase = instruction.block_context_lookup(BlockContextFieldTag.Coinbase)
     instruction.add_balance(coinbase, [reward])
-
+    # send base_fee to treasury
+    burned, carry = instruction.mul_word_by_u64(base_fee, gas_used)
+    instruction.constrain_zero(carry)
+    treasury = instruction.block_context_lookup(BlockContextFieldTag.Treasury)
+    instruction.add_balance(treasury, [burned])
     # constrain tx status matches with `PostStateOrStatus` of TxReceipt tag in RW
     instruction.constrain_equal(
         (1 - is_tx_invalid.expr()) * is_persistent,

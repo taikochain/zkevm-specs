@@ -61,6 +61,7 @@ POW2 = 2**256
 
 class Block:
     coinbase: U160
+    treasury: U160
 
     # Gas needs a lot arithmetic operation or comparison in EVM circuit, so we
     # assume gas limit in the near futuer will not exceed U64, to reduce the
@@ -87,6 +88,7 @@ class Block:
     def __init__(
         self,
         coinbase: U160 = U160(0x10),
+        treasury: U160 = U160(0x20),
         gas_limit: U64 = U64(int(15e6)),
         number: U64 = U64(0),
         timestamp: U64 = U64(0),
@@ -98,6 +100,7 @@ class Block:
         assert len(history_hashes) <= min(256, number)
 
         self.coinbase = coinbase
+        self.treasury = treasury
         self.gas_limit = gas_limit
         self.number = number
         self.timestamp = timestamp
@@ -111,6 +114,7 @@ class Block:
         word = lambda w: WordOrValue(Word(w))
         return [
             BlockTableRow(FQ(BlockContextFieldTag.Coinbase), FQ(0), value(self.coinbase)),
+            BlockTableRow(FQ(BlockContextFieldTag.Treasury), FQ(0), value(self.treasury)),
             BlockTableRow(FQ(BlockContextFieldTag.GasLimit), FQ(0), value(self.gas_limit)),
             BlockTableRow(FQ(BlockContextFieldTag.Number), FQ(0), value(self.number)),
             BlockTableRow(FQ(BlockContextFieldTag.Timestamp), FQ(0), value(self.timestamp)),
@@ -136,7 +140,8 @@ class Transaction:
     id: int
     nonce: U64
     gas: U64
-    gas_price: U256
+    gas_tip_cap: U256
+    gas_fee_cap: U256
     caller_address: U160
     callee_address: Optional[U160]
     value: U256
@@ -149,7 +154,8 @@ class Transaction:
         id: int = 1,
         nonce: U64 = U64(0),
         gas: U64 = U64(21000),
-        gas_price: U256 = U256(int(2e9)),
+        gas_tip_cap: U256 = U256(int(0)),
+        gas_fee_cap: U256 = U256(int(2e9)),
         caller_address: U160 = U160(0xCAFE),
         callee_address: Optional[U160] = None,
         value: U256 = U256(0),
@@ -160,7 +166,8 @@ class Transaction:
         self.id = id
         self.nonce = nonce
         self.gas = gas
-        self.gas_price = gas_price
+        self.gas_tip_cap = gas_tip_cap
+        self.gas_fee_cap = gas_fee_cap
         self.caller_address = caller_address
         self.callee_address = callee_address
         self.value = value
@@ -170,7 +177,9 @@ class Transaction:
 
     @classmethod
     def padding(obj, id: int):
-        tx = obj(id, U64(0), U64(0), U256(0), U160(0), U160(0), U256(0), bytes(), 0, list())
+        tx = obj(
+            id, U64(0), U64(0), U256(0), U256(0), U160(0), U160(0), U256(0), bytes(), 0, list()
+        )
         return tx
 
     def call_data_gas_cost(self) -> int:
@@ -204,9 +213,15 @@ class Transaction:
             TxTableRow(FQ(self.id), FQ(TxContextFieldTag.Gas), FQ(0), value(self.gas)),
             TxTableRow(
                 FQ(self.id),
-                FQ(TxContextFieldTag.GasPrice),
+                FQ(TxContextFieldTag.GasTipCap),
                 FQ(0),
-                word(self.gas_price),
+                word(self.gas_tip_cap),
+            ),
+            TxTableRow(
+                FQ(self.id),
+                FQ(TxContextFieldTag.GasFeeCap),
+                FQ(0),
+                word(self.gas_fee_cap),
             ),
             TxTableRow(
                 FQ(self.id), FQ(TxContextFieldTag.CallerAddress), FQ(0), value(self.caller_address)

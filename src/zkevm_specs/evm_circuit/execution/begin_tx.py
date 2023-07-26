@@ -42,11 +42,11 @@ def begin_tx(instruction: Instruction):
     # bump the account nonce if the tx is valid
     instruction.constrain_equal(nonce, nonce_prev.expr() + 1 - is_tx_invalid.expr())
 
-    # TODO: Implement EIP 1559 (currently it supports legacy transaction format)
     # Calculate gas fee
+    # Subtract the gas fee from the sender balance: gas * gas_fee_cap
     tx_gas = instruction.tx_context_lookup(tx_id, TxContextFieldTag.Gas)
-    tx_gas_price = instruction.tx_gas_price(tx_id)
-    gas_fee, carry = instruction.mul_word_by_u64(tx_gas_price, tx_gas)
+    tx_gas_fee_cap = instruction.tx_gas_fee_cap(tx_id)
+    gas_fee, carry = instruction.mul_word_by_u64(tx_gas_fee_cap, tx_gas)
     instruction.constrain_zero(carry)
 
     # intrinsic gas

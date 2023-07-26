@@ -52,12 +52,12 @@ TESTING_DATA = (
         CALLEE_WITH_RETURN_BYTECODE,
         True,
     ),
-    # Transfer nothing with random gas_price, successfully
+    # Transfer nothing with random gas_fee_cap, successfully
     (
         Transaction(
             caller_address=rand_address(),
             callee_address=CALLEE_ADDRESS,
-            gas_price=rand_range(42857142857143),
+            gas_fee_cap=rand_range(42857142857143),
         ),
         CALLEE_WITH_RETURN_BYTECODE,
         True,
@@ -70,12 +70,12 @@ TESTING_DATA = (
         CALLEE_WITH_REVERT_BYTECODE,
         False,
     ),
-    # Transfer nothing with random gas_price, tx reverts
+    # Transfer nothing with random gas_fee_cap, tx reverts
     (
         Transaction(
             caller_address=rand_address(),
             callee_address=CALLEE_ADDRESS,
-            gas_price=rand_range(42857142857143),
+            gas_fee_cap=rand_range(42857142857143),
         ),
         CALLEE_WITH_REVERT_BYTECODE,
         False,
@@ -164,7 +164,7 @@ def test_begin_tx(tx: Transaction, callee: Account, is_success: bool):
     caller_balance_prev = int(1e20)
     callee_balance_prev = callee.balance
     caller_balance = (
-        caller_balance_prev - (tx.value + tx.gas * tx.gas_price)
+        caller_balance_prev - (tx.value + tx.gas * tx.gas_fee_cap)
         if is_tx_valid
         else caller_balance_prev
     )

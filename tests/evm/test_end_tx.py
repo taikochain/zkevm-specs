@@ -21,7 +21,11 @@ TESTING_DATA = (
     # Tx with non-capped refund
     (
         Transaction(
-            id=1, caller_address=0xFE, callee_address=CALLEE_ADDRESS, gas=27000, gas_price=int(2e9)
+            id=1,
+            caller_address=0xFE,
+            callee_address=CALLEE_ADDRESS,
+            gas=27000,
+            gas_fee_cap=int(2e9),
         ),
         994,
         4800,
@@ -32,7 +36,11 @@ TESTING_DATA = (
     # Tx with capped refund
     (
         Transaction(
-            id=2, caller_address=0xFE, callee_address=CALLEE_ADDRESS, gas=65000, gas_price=int(2e9)
+            id=2,
+            caller_address=0xFE,
+            callee_address=CALLEE_ADDRESS,
+            gas=65000,
+            gas_fee_cap=int(2e9),
         ),
         3952,
         38400,
@@ -43,7 +51,11 @@ TESTING_DATA = (
     # Last tx
     (
         Transaction(
-            id=3, caller_address=0xFE, callee_address=CALLEE_ADDRESS, gas=21000, gas_price=int(2e9)
+            id=3,
+            caller_address=0xFE,
+            callee_address=CALLEE_ADDRESS,
+            gas=21000,
+            gas_fee_cap=int(2e9),
         ),
         0,  # gas_left
         0,  # refund
@@ -58,7 +70,7 @@ TESTING_DATA = (
             caller_address=0xFE,
             callee_address=CALLEE_ADDRESS,
             gas=60000,
-            gas_price=int(2e9),
+            gas_fee_cap=int(2e9),
             invalid_tx=1,
         ),
         60000,
@@ -74,12 +86,60 @@ TESTING_DATA = (
             caller_address=0xFE,
             callee_address=CALLEE_ADDRESS,
             gas=65000,
-            gas_price=int(2e9),
+            gas_fee_cap=int(2e9),
             invalid_tx=1,
         ),
         65000,
         0,
         True,
+        21000,
+        True,  # success
+    ),
+    # Eip 1559 tx, tip_cap < fee_cap - base_fee
+    (
+        Transaction(
+            id=2,
+            caller_address=0xFE,
+            callee_address=CALLEE_ADDRESS,
+            gas=65000,
+            gas_fee_cap=int(3e9),
+            gas_tip_cap=int(1e9),
+        ),
+        65000,
+        0,
+        False,
+        21000,
+        True,  # success
+    ),
+    # Eip 1559 tx, tip_cap = fee_cap - base_fee
+    (
+        Transaction(
+            id=2,
+            caller_address=0xFE,
+            callee_address=CALLEE_ADDRESS,
+            gas=65000,
+            gas_fee_cap=int(3e9),
+            gas_tip_cap=int(2e9),
+        ),
+        65000,
+        0,
+        False,
+        21000,
+        True,  # success
+    ),
+    # Eip 1559 tx, tip_cap > fee_cap - base_fee
+    (
+        Transaction(
+            id=2,
+            caller_address=0xFE,
+            callee_address=CALLEE_ADDRESS,
+            gas=65000,
+            gas_fee_cap=int(3e9),
+            gas_tip_cap=int(3e9),
+        ),
+        65000,
+        0,
+        False,
         21000,
         True,  # success
     ),
@@ -99,11 +159,13 @@ def test_end_tx(
 ):
     block = Block()
     effective_refund = min(refund, (tx.gas - gas_left) // MAX_REFUND_QUOTIENT_OF_GAS_USED)
-    caller_balance_prev = int(1e18) - (tx.value + tx.gas * tx.gas_price)
-    caller_balance = caller_balance_prev + (gas_left + effective_refund) * tx.gas_price
+    caller_balance_prev = int(1e18) - (tx.value + tx.gas * tx.gas_fee_cap)
+    caller_balance = caller_balance_prev + (gas_left + effective_refund) * tx.gas_fee_cap
     coinbase_balance_prev = 0
-    coinbase_balance = coinbase_balance_prev + (tx.gas - gas_left) * (tx.gas_price - block.base_fee)
-
+    effective_tip = min(tx.gas_tip_cap, tx.gas_fee_cap - block.base_fee)
+    coinbase_balance = coinbase_balance_prev + (tx.gas - gas_left) * effective_tip
+    treasury_balance_prev = 0
+    treasury_balance = treasury_balance_prev + (tx.gas - gas_left) * block.base_fee
     rw_dictionary = (
         # fmt: off
         RWDictionary(17)
@@ -112,6 +174,7 @@ def test_end_tx(
             .tx_refund_read(tx.id, refund)
             .account_write(tx.caller_address, AccountFieldTag.Balance, Word(caller_balance), Word(caller_balance_prev))
             .account_write(block.coinbase, AccountFieldTag.Balance, Word(coinbase_balance), Word(coinbase_balance_prev))
+            .account_write(block.treasury, AccountFieldTag.Balance, Word(treasury_balance), Word(treasury_balance_prev))
             .tx_receipt_write(tx.id, TxReceiptFieldTag.PostStateOrStatus, 1 - tx.invalid_tx)
             .tx_receipt_write(tx.id, TxReceiptFieldTag.LogLength, 0)
         # fmt: on

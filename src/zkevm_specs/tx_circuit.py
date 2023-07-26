@@ -15,7 +15,7 @@ from .util import (
 from eth_keys import KeyAPI  # type: ignore
 import rlp  # type: ignore
 from eth_utils import keccak
-from .evm_circuit import TxContextFieldTag as Tag
+from .evm_circuit import TxContextFieldTag as Tag, AccessTuple
 
 
 class Row:
@@ -297,11 +297,13 @@ class Transaction(NamedTuple):
     """
 
     nonce: U64
-    gas_price: U256
+    gas_tip_cap: U256
+    gas_fee_cap: U256
     gas: U64
     to: Union[None, U160]
     value: U256
     data: bytes
+    access_list: List[AccessTuple]
     sig_v: U64
     sig_r: U256
     sig_s: U256
@@ -316,7 +318,8 @@ def padding_tx(tx_id: int) -> List[Row]:
     return [
         Row(FQ(tx_id), FQ(Tag.Nonce), FQ(0), FQ(0)),
         Row(FQ(tx_id), FQ(Tag.Gas), FQ(0), FQ(0)),
-        Row(FQ(tx_id), FQ(Tag.GasPrice), FQ(0), Word(0)),
+        Row(FQ(tx_id), FQ(Tag.GasTipCap), FQ(0), Word(0)),
+        Row(FQ(tx_id), FQ(Tag.GasFeeCap), FQ(0), Word(0)),
         Row(FQ(tx_id), FQ(Tag.CallerAddress), FQ(0), FQ(0)),
         Row(FQ(tx_id), FQ(Tag.CalleeAddress), FQ(0), FQ(0)),
         Row(FQ(tx_id), FQ(Tag.IsCreate), FQ(0), FQ(0)),
@@ -339,7 +342,17 @@ def tx2witness(
     """
 
     tx_sign_data = rlp.encode(
-        [tx.nonce, tx.gas_price, tx.gas, tx.encode_to(), tx.value, tx.data, chain_id, 0, 0]
+        [
+            chain_id,
+            tx.nonce,
+            tx.gas_tip_cap,
+            tx.gas_fee_cap,
+            tx.gas,
+            tx.encode_to(),
+            tx.value,
+            tx.data,
+            tx.access_list,
+        ]
     )
     tx_sign_hash = keccak(tx_sign_data)
 
@@ -379,7 +392,8 @@ def tx2witness(
     rows: List[Row] = []
     rows.append(Row(tx_id, FQ(Tag.Nonce), FQ(0), FQ(tx.nonce)))
     rows.append(Row(tx_id, FQ(Tag.Gas), FQ(0), FQ(tx.gas)))
-    rows.append(Row(tx_id, FQ(Tag.GasPrice), FQ(0), Word(tx.gas_price)))
+    rows.append(Row(tx_id, FQ(Tag.GasTipCap), FQ(0), Word(tx.gas_tip_cap)))
+    rows.append(Row(tx_id, FQ(Tag.GasFeeCap), FQ(0), Word(tx.gas_fee_cap)))
     rows.append(Row(tx_id, FQ(Tag.CallerAddress), FQ(0), FQ(int.from_bytes(addr, "big"))))
     rows.append(Row(tx_id, FQ(Tag.CalleeAddress), FQ(0), FQ(tx.to or 0)))
     rows.append(Row(tx_id, FQ(Tag.IsCreate), FQ(0), FQ(1) if tx.to is None else FQ(0)))

@@ -134,6 +134,7 @@ class BlockContextFieldTag(IntEnum):
     """
 
     Coinbase = auto()
+    Treasury = auto()
     GasLimit = auto()
     Number = auto()
     Timestamp = auto()
@@ -153,7 +154,8 @@ class TxContextFieldTag(IntEnum):
 
     Nonce = auto()
     Gas = auto()
-    GasPrice = auto()
+    GasTipCap = auto()  # a.k.a. maxPriorityFeePerGas
+    GasFeeCap = auto()  # a.k.a. maxFeePerGas
     CallerAddress = auto()
     CalleeAddress = auto()
     IsCreate = auto()

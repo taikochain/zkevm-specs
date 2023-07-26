@@ -452,6 +452,10 @@ class Instruction:
         except ValueError:
             return FQ(0)
 
+    def min_word(self, lhs: Word, rhs: Word) -> Word:
+        lt, _ = self.compare_word(lhs, rhs)
+        return self.select_word(lt, lhs, rhs)
+
     def min(self, lhs: Expression, rhs: Expression, n_bytes: int) -> FQ:
         lt, _ = self.compare(lhs, rhs, n_bytes)
         return cast_expr(self.select(lt, lhs, rhs), FQ)
@@ -756,8 +760,11 @@ class Instruction:
             bytecode_hash, FQ(BytecodeFieldTag.Header), FQ(0), FQ(0)
         ).value
 
-    def tx_gas_price(self, tx_id: Expression) -> Word:
-        return self.tx_context_lookup_word(tx_id, TxContextFieldTag.GasPrice)
+    def tx_gas_tip_cap(self, tx_id: Expression) -> Word:
+        return self.tx_context_lookup_word(tx_id, TxContextFieldTag.GasTipCap)
+
+    def tx_gas_fee_cap(self, tx_id: Expression) -> Word:
+        return self.tx_context_lookup_word(tx_id, TxContextFieldTag.GasFeeCap)
 
     def responsible_opcode_lookup(self, opcode: Expression, aux: Expression = FQ(0)):
         self.fixed_lookup(
