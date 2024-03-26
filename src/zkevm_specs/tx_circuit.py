@@ -472,7 +472,7 @@ def txs2witness(
         dummy_ecdsa_chip,
     )
     # Fill the rest of sign_verifications with the witnessess assigned to 0s
-    # and dummy ecdsa vefification values to disable the verification.
+    # and dummy ecdsa verification values to disable the verification.
     sign_verifications = sign_verifications + [padding_sign_verification] * (MAX_TXS - len(txs))
 
     return Witness(rows, keccak_table, sign_verifications)

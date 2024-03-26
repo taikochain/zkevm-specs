@@ -241,7 +241,7 @@ class CallContextFieldTag(IntEnum):
     CalleeAddress = auto()
     CallDataOffset = auto()
     CallDataLength = auto()
-    ReturnDataOffset = auto()  # for callee to set return_data to caller's memeory
+    ReturnDataOffset = auto()  # for callee to set return_data to caller's memory
     ReturnDataLength = auto()
     Value = auto()
     IsSuccess = auto()  # to peek result in the future
